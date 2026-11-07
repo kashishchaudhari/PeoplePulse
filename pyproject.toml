@@ -1,0 +1,14 @@
+[project]
+name = "peoplepulse"
+version = "0.2.0"
+description = "Workforce intelligence and HR reporting portfolio dashboard"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "streamlit>=1.38,<2",
+    "pandas>=2.0,<3",
+    "plotly>=5.24,<7",
+]
+
+[tool.uv]
+package = false
