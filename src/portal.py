@@ -2,6 +2,7 @@
 import csv
 import hashlib
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,8 +16,16 @@ REPORTS={
  'workforce': '''SELECT JobRole, COUNT(*) headcount, ROUND(AVG(YearsAtCompany),1) avg_tenure, ROUND(AVG(JobSatisfaction),2) avg_job_satisfaction FROM employees GROUP BY JobRole ORDER BY headcount DESC'''
 }
 
+@contextmanager
 def connection(path):
-    con=sqlite3.connect(str(path));con.row_factory=sqlite3.Row;return con
+    """Close SQLite handles on every exit, including on Windows and errors."""
+    con = sqlite3.connect(str(path))
+    con.row_factory = sqlite3.Row
+    try:
+        with con:
+            yield con
+    finally:
+        con.close()
 
 def initialize(path):
     with connection(path) as con:
