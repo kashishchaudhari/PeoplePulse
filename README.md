@@ -9,16 +9,17 @@
 
 PeoplePulse is an interactive workforce intelligence platform featuring HR reporting, recruitment funnel analysis, attrition investigation, and data-driven insights.
 
+
 ## Dashboard Preview
 
 ### Executive Overview
-![Executive Overview](assets/Executive Overview.png)
+![Executive Overview](assets/Executive%20Overview.png)
 
 ### Attrition Investigation
-![Attrition Analysis](assets/Attribution Insights.png)
+![Attrition Analysis](assets/Attribution%20Insights.png)
 
 ### Recruitment Intelligence
-![Recruitment Analytics](assets/Recruitment Analytics.png)
+![Recruitment Analytics](assets/Recruitment%20Analytics.png)
 
 **Portfolio project | Python · SQL · Streamlit · Plotly · pandas · SciPy · uv**
 
