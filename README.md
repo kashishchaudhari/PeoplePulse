@@ -1,5 +1,25 @@
 # PeoplePulse · Workforce Intelligence & Recruitment Analytics
 
+
+
+
+## Live Dashboard
+
+[Explore PeoplePulse — Interactive HR Analytics Dashboard](https://peoplepulse-analytics.streamlit.app/)
+
+PeoplePulse is an interactive workforce intelligence platform featuring HR reporting, recruitment funnel analysis, attrition investigation, and data-driven insights.
+
+## Dashboard Preview
+
+### Executive Overview
+![Executive Overview](assets/.png)
+
+### Attrition Investigation
+![Attrition Analysis](assets/Executive Overview.png)
+
+### Recruitment Intelligence
+![Recruitment Analytics](assets/Recruitment Analytics.png)
+
 **Portfolio project | Python · SQL · Streamlit · Plotly · pandas · SciPy · uv**
 
 PeoplePulse turns fictional HR and recruitment records into reproducible, understandable workforce insights. It combines **data ingestion, SQL reporting, statistical exploration, recruitment funnel analysis, interactive dashboards, exportable reports and automated tests** in one application.
