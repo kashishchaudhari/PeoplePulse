@@ -12,10 +12,10 @@ PeoplePulse is an interactive workforce intelligence platform featuring HR repor
 ## Dashboard Preview
 
 ### Executive Overview
-![Executive Overview](assets/.png)
+![Executive Overview](assets/Executive Overview.png)
 
 ### Attrition Investigation
-![Attrition Analysis](assets/Executive Overview.png)
+![Attrition Analysis](assets/Attribution Insights.png)
 
 ### Recruitment Intelligence
 ![Recruitment Analytics](assets/Recruitment Analytics.png)
