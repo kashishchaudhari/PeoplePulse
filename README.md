@@ -1,26 +1,5 @@
 # PeoplePulse · Workforce Intelligence & Recruitment Analytics
 
-
-
-
-## Live Dashboard
-
-[Explore PeoplePulse — Interactive HR Analytics Dashboard](https://peoplepulse-analytics.streamlit.app/)
-
-PeoplePulse is an interactive workforce intelligence platform featuring HR reporting, recruitment funnel analysis, attrition investigation, and data-driven insights.
-
-
-## Dashboard Preview
-
-### Executive Overview
-![Executive Overview](assets/Executive%20Overview.png)
-
-### Attrition Investigation
-![Attrition Analysis](assets/Attribution%20Insights.png)
-
-### Recruitment Intelligence
-![Recruitment Analytics](assets/Recruitment%20Analytics.png)
-
 **Portfolio project | Python · SQL · Streamlit · Plotly · pandas · SciPy · uv**
 
 PeoplePulse turns fictional HR and recruitment records into reproducible, understandable workforce insights. It combines **data ingestion, SQL reporting, statistical exploration, recruitment funnel analysis, interactive dashboards, exportable reports and automated tests** in one application.
@@ -90,7 +69,7 @@ cd /d C:\Users\LENOVO\Downloads\PeoplePulse
 pip install uv
 uv sync
 uv run python -m unittest discover -s tests -v
-uv run streamlit run app.py
+uv run streamlit run main.py
 ```
 
 For Linux/macOS, clone the repository and run the last three commands from the project directory. Python 3.11 is the default local version (`.python-version`).
@@ -111,7 +90,7 @@ uv run python src/case_study.py --db data/peoplepulse.db --source "Synthetic dem
 
 ```cmd
 uv run python -m unittest discover -s tests -v
-uv run python -m compileall -q app.py src tests
+uv run python -m compileall -q main.py app.py src tests
 ```
 
 GitHub Actions runs the same checks on pushes and pull requests: see `.github/workflows/tests.yml`.
@@ -119,7 +98,7 @@ GitHub Actions runs the same checks on pushes and pull requests: see `.github/wo
 ## Deploy public dashboard
 
 1. Push these files to `kashishchaudhari/PeoplePulse` (repository root, including `.streamlit`).
-2. In [Streamlit Community Cloud](https://share.streamlit.io/), deploy branch `main`, entrypoint `app.py`.
+2. In [Streamlit Community Cloud](https://share.streamlit.io/), deploy branch `main`, entrypoint `app.py` (compatibility launcher for `main.py`), or change it to `main.py` after deployment.
 3. Use the included `requirements.txt` for cloud installation compatibility.
 4. Add the live deployment URL to the GitHub **About → Website** field and at the top of this README.
 
@@ -130,7 +109,8 @@ Streamlit Community Cloud file storage can reset during restarts and redeploymen
 ## Repository structure
 
 ```text
-app.py                       # Six-tab interactive dashboard
+main.py                      # Complete six-tab interactive Streamlit dashboard
+app.py                       # Backward-compatible Streamlit Cloud launcher
 src/portal.py                # SQLite ingestion, reporting and audit engine
 src/generate_demo.py         # Deterministic fictional employee data
 src/analytics.py             # Attrition summaries, Wilson intervals, quality checks
