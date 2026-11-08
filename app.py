@@ -9,6 +9,9 @@ import plotly.express as px
 import streamlit as st
 from generate_demo import generate
 from portal import audit, connection, initialize, load_csv, report, summary
+from analytics import grouped_attrition, overtime_analysis, quality_report, workforce_metrics, attrition_narrative
+from case_study import build_case_study
+from recruitment import demo_applications, funnel, source_metrics, bottleneck_summary
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -54,14 +57,14 @@ with st.sidebar:
         st.rerun()
     st.caption("Sample records are synthetic; Kaggle IBM records are also fictional. No real employee data required.")
     st.divider()
-    st.caption("Portfolio prototype · Python · SQL · SQLite · Streamlit · uv")
+    st.caption("PeoplePulse v0.3 · SQL · Streamlit · uv · explainable reporting")
 
 with connection(DB) as con:
     departments = [r[0] for r in con.execute("SELECT DISTINCT Department FROM employees ORDER BY Department")]
     role_options = [r[0] for r in con.execute("SELECT DISTINCT JobRole FROM employees ORDER BY JobRole")]
 
 st.title("Workforce intelligence, made useful.")
-st.markdown('<p class="subhead">A practical HR analytics workspace for exploring workforce health and generating consistent reporting.</p>', unsafe_allow_html=True)
+st.markdown('<p class="subhead">Explore workforce patterns, interpret associations responsibly, and export reproducible SQL-based reporting.</p>', unsafe_allow_html=True)
 st.caption("DEMO ENVIRONMENT  •  FICTIONAL EMPLOYEE DATA  •  NOT CONNECTED TO ORACLE HCM")
 
 f1,f2 = st.columns([1,1])
@@ -83,7 +86,7 @@ params.extend(selected_roles)
 where = " WHERE " + " AND ".join(clauses)
 with connection(DB) as con:
     # Only selected columns; no employee-level records are displayed in the UI.
-    data = pd.read_sql_query("""SELECT Department, JobRole, Attrition, Gender, Age, MonthlyIncome,
+    data = pd.read_sql_query("""SELECT EmployeeNumber, Department, JobRole, Attrition, Gender, Age, MonthlyIncome,
                JobSatisfaction, PerformanceRating, YearsAtCompany, OverTime
                FROM employees""" + where, con, params=params)
 if data.empty:
@@ -101,7 +104,7 @@ rate_card.metric("Attrition rate", f"{rate:.1f}%")
 retention_card.metric("Non-attrition share", f"{retention:.1f}%")
 tenure_card.metric("Average tenure", f"{mean_tenure:.1f} years")
 
-tab_overview,tab_attrition,tab_workforce,tab_reports = st.tabs(["📊 Executive overview", "📉 Attrition insights", "👥 Workforce profile", "📁 Report center"])
+tab_overview,tab_attrition,tab_workforce,tab_investigation,tab_recruitment,tab_reports = st.tabs(["📊 Executive overview", "📉 Attrition insights", "👥 Workforce profile", "🔎 Investigation", "🎯 Recruitment", "📁 Report center"])
 
 COLORS = ["#137C85", "#48A9A6", "#A7D9D5", "#2D5E79", "#87AFC4", "#D9B26D"]
 
@@ -123,7 +126,11 @@ with tab_overview:
     with right:
         trend = data.groupby("YearsAtCompany").size().rename("Employees").reset_index()
         bar(trend, "YearsAtCompany", "Employees", "Employee tenure distribution")
-    st.markdown('<div class="notice"><strong>Reading the dashboard:</strong> Figures reflect the active department and job-role filters. Attrition indicates fictional dataset outcomes, not a forecast.</div>',unsafe_allow_html=True)
+    insight = attrition_narrative(data)
+    st.markdown("#### Findings at a glance")
+    st.info(insight['department'])
+    st.write(insight['overtime'])
+    st.caption("All measures reflect current filters and fictional cross-sectional data; these are not workforce forecasts.")
 
 with tab_attrition:
     left, right = st.columns(2)
@@ -149,6 +156,83 @@ with tab_workforce:
     st.markdown("#### Department workforce snapshot")
     snapshot = data.groupby("Department").agg(Headcount=("Age","size"),Avg_Age=("Age","mean"),Avg_Tenure=("YearsAtCompany","mean"),Avg_Satisfaction=("JobSatisfaction","mean")).round(1).reset_index()
     st.dataframe(snapshot,hide_index=True,use_container_width=True)
+
+with tab_investigation:
+    st.markdown("#### Investigate a workforce question")
+    st.write("**Question:** Which groups show higher observed attrition, and how reliable are those comparisons?")
+    st.caption("Cross-sectional exploratory analysis; not causal, predictive or a real-employer inference.")
+    group = st.selectbox("Compare attrition by", ["Department", "OverTime", "JobRole", "JobSatisfaction", "JobLevel", "YearsAtCompany"])
+    min_n = st.slider("Minimum records per displayed group", 5, 40, 10)
+    by_group = grouped_attrition(data, group, minimum_group_size=min_n)
+    if by_group.empty:
+        st.warning("No groups meet the selected minimum size. Broaden the filters or lower the threshold.")
+    else:
+        ranked = by_group.sort_values("Attrition rate (%)", ascending=False)
+        fig = px.bar(ranked, x=group, y="Attrition rate (%)", color="Employees", text="Attrition rate (%)",
+                     color_continuous_scale=["#9dd6d6", "#147c85"], title="Observed attrition rate by group")
+        fig.update_layout(height=390, margin=dict(l=10,r=10,t=45,b=20))
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(ranked, use_container_width=True, hide_index=True)
+        st.caption("95% Wilson confidence intervals appear in the table. Groups below the selected minimum are omitted; intervals represent statistical uncertainty, not representativeness.")
+    ot = overtime_analysis(data)
+    st.markdown("#### Overtime comparison")
+    if ot['available']:
+        x,y,z = st.columns(3)
+        x.metric("Overtime attrition", f"{ot['yes_rate_pct']:.1f}%", help=f"n={ot['yes_n']}")
+        y.metric("No-overtime attrition", f"{ot['no_rate_pct']:.1f}%", help=f"n={ot['no_n']}")
+        z.metric("Observed rate difference", f"{ot['difference_pp']:+.1f} pp")
+        if ot['chi_square_p'] is not None:
+            st.caption(f"Exploratory unadjusted chi-square p-value = {ot['chi_square_p']:.3g}. A low p-value does not establish causation.")
+        else:
+            st.caption("Unadjusted significance test omitted because expected cell counts are small.")
+    else:
+        st.warning(ot['reason'])
+    st.markdown("#### Data quality scorecard")
+    quality = quality_report(data)
+    passed = (quality.Result == 'PASS').sum()
+    st.metric("Validation checks passed",f"{passed}/{len(quality)}")
+    st.dataframe(quality, hide_index=True,use_container_width=True)
+    st.download_button("Download analysis case study (Markdown)",
+                       build_case_study(data, 'Current filtered dataset (fictional)'),
+                       'peoplepulse_attrition_case_study.md','text/markdown')
+    st.caption("Recommendations: validate patterns with authorized longitudinal data, investigate confounders, and predefine evaluation metrics before interventions.")
+
+with tab_recruitment:
+    st.markdown("#### Talent acquisition intelligence")
+    st.info("This module uses **900 separate, entirely synthetic applicant records** and does not represent any real candidates or employer results.")
+    hires = demo_applications()
+    fcol, scol = st.columns(2)
+    with fcol:
+        selected_sources = st.multiselect("Sourcing channels", list(hires.Source.unique()),default=list(hires.Source.unique()))
+    with scol:
+        selected_recruit_roles = st.multiselect("Recruitment roles", list(hires.Role.unique()),default=list(hires.Role.unique()))
+    filtered_hires = hires[hires.Source.isin(selected_sources) & hires.Role.isin(selected_recruit_roles)]
+    if filtered_hires.empty:
+        st.warning("No matching applications. Broaden the recruitment filters.")
+    else:
+        f=funnel(filtered_hires)
+        s=source_metrics(filtered_hires)
+        m1,m2,m3 = st.columns(3)
+        m1.metric("Applicants",f"{len(filtered_hires):,}")
+        m2.metric("Hires",str(int(filtered_hires.Hired.sum())))
+        m3.metric("Applicant-to-hire rate",f"{100*filtered_hires.Hired.mean():.1f}%")
+        a,b=st.columns(2)
+        with a:
+            fig=px.funnel(f,x="Candidates",y="Stage", title="Recruitment conversion funnel",
+                          color_discrete_sequence=["#137C85"])
+            fig.update_layout(height=380)
+            st.plotly_chart(fig,use_container_width=True)
+            st.dataframe(f,hide_index=True,use_container_width=True)
+        with b:
+            fig=px.bar(s,x="Source",y="Hire conversion (%)",text="Hire conversion (%)",
+                       color_discrete_sequence=["#2D5E79"], title="Applicant-to-hire rate by source")
+            fig.update_layout(height=380)
+            st.plotly_chart(fig,use_container_width=True)
+            st.dataframe(s,hide_index=True,use_container_width=True)
+        st.info(bottleneck_summary(filtered_hires))
+        st.download_button("Download fictional recruitment analytics CSV",filtered_hires.to_csv(index=False),
+                           'synthetic_recruitment_applications.csv','text/csv')
+        st.caption("The stage conversion uses preceding-stage denominators; time-to-hire is defined only for hired applicants. This dataset is not the Kaggle IBM HR dataset.")
 
 with tab_reports:
     st.markdown("#### SQL report library")

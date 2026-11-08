@@ -1,86 +1,134 @@
-# PeoplePulse · Workforce Intelligence
+# PeoplePulse · Workforce Intelligence & Recruitment Analytics
 
-Interactive HR analytics and SQL reporting portfolio prototype built with **Python, SQL, SQLite, pandas, Plotly, Streamlit, and uv**.
+**Portfolio project | Python · SQL · Streamlit · Plotly · pandas · SciPy · uv**
 
-> **Live dashboard:** After deploying to Streamlit Community Cloud, paste the public URL here.
->
-> **Demo only:** Uses deterministic synthetic employee records out of the box, or IBM's fictional HR dataset from Kaggle. No real employee data. Not connected to Oracle HCM, OTBI, or BI Publisher.
+PeoplePulse turns fictional HR and recruitment records into reproducible, understandable workforce insights. It combines **data ingestion, SQL reporting, statistical exploration, recruitment funnel analysis, interactive dashboards, exportable reports and automated tests** in one application.
 
-## What you'll see
+> **Privacy and provenance:** All demo employee and applicant records are *synthetic*. You can optionally import the publicly available **fictional** [IBM HR Analytics Employee Attrition & Performance](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) CSV (1,470 rows). The recruitment module uses a **separate synthetic event dataset**; it is not extracted from IBM. There is no connection to Oracle HCM, OTBI or BI Publisher. This project must not be used for real employee data.
 
-- **Executive overview:** employee count, attrition %, non-attrition %, average tenure, headcount by department, tenure distribution.
-- **Attrition insights:** department attrition rates, overtime comparison, metrics table.
-- **Workforce profile:** job-role distribution, department satisfaction, workforce snapshot.
-- **Report center:** five SQL report templates, CSV exports, local audit records, and illustrative role restrictions on compensation.
-- **Global filters:** department and job role, applied to interactive analytics. Report-center SQL exports are explicitly database-wide (not filtered).
-- **Zero-setup demo data:** 450 deterministic, fictional employees loaded at first launch. You can upload the [IBM HR Analytics Employee Attrition & Performance dataset on Kaggle](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset).
+## Why this project exists
 
-## Tech stack
+**Business problem:** HR teams often need consistent metrics and an explanation of workforce patterns, not disconnected charts. PeoplePulse answers questions such as:
 
-| Layer | Tools |
+- How do headcount, attrition and tenure vary by department and role?
+- Is observed attrition different for overtime versus non-overtime groups, and what is the sample size?
+- Which recruitment stages lose the most candidates, and which sourcing channels show better conversion?
+- Can reports be regenerated, checked and exported using traceable analytical logic?
+
+## Product capabilities
+
+| Page | What it demonstrates |
 | --- | --- |
-| Interactive UI | Streamlit, Plotly |
-| Transformation | Python, pandas |
-| Reporting | SQL, SQLite |
-| Environment and dependencies | uv (`pyproject.toml`) |
-| Testing | Python `unittest` |
-| Deployment | Streamlit Community Cloud |
+| Executive Overview | Cross-filtered KPIs, headcount, tenure and evidence-based summary |
+| Attrition Insights | Department and overtime comparisons with explicit denominators |
+| Workforce Profile | Role composition, tenure and job satisfaction |
+| Analytical Investigation | Rates by group, Wilson 95% intervals, group-size threshold, chi-square (only with adequate expected counts), 8 quality checks, downloadable methodology |
+| Recruitment Intelligence | Separate 900-record synthetic funnel, source conversion, hired-candidate median time to hire, bottleneck summary |
+| Report Center | Five SQL query templates, CSV export, simulated compensation restrictions, report audit history |
 
-## Run locally with uv
+### Analytical method
 
-1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
-2. Clone the repository and enter its root directory.
-3. Run:
+- **Outcome:** Attrition rate = employees marked `Attrition=Yes` divided by the total group count.
+- **Uncertainty:** Wilson 95% binomial intervals are shown alongside rates. This does **not** make fictional records representative of actual workforce trends.
+- **Overtime:** Compare rates and show observed percentage-point difference. The unadjusted chi-square p-value is shown only if expected cell counts meet the threshold.
+- **Recruitment:** Cumulative funnel counts and stage-to-stage conversion rates use the correct previous-stage denominators; median time to hire is based on hires only.
+- **Quality assurance:** Check nonmissing unique employee IDs, valid labels and numeric ranges.
+- **Interpretation:** Observational fictional records cannot identify causal effects, realistic prevalence, seasonal trends, actual savings or organizational outcomes.
 
-```bash
+Read the generated [attrition case study](docs/ATTRITION_CASE_STUDY.md). The included analysis uses the **450-row synthetic demo**; importing the IBM dataset and rerunning the analysis will produce different findings.
+
+## Architecture
+
+```text
+Source: synthetic HR CSV or fictional Kaggle IBM HR CSV
+     │
+     ▼
+Python CSV validation  ──► SQLite employee table
+                              │
+                  ┌───────────┼──────────────┐
+                  ▼           ▼              ▼
+            Saved SQL    pandas / SciPy   Quality checks
+                  │           │              │
+                  └───────────┴──────────────┘
+                              │
+                              ▼
+                    Streamlit / Plotly UI
+                        │          │
+                   CSV export   Report audit
+
+Synthetic recruitment event generator (separate dataset)
+     └──► stage funnel / source conversion / median time-to-hire ─► UI
+```
+
+The SQL examples in `sql/advanced_analytics.sql` demonstrate **CTEs, conditional aggregation, window ranking, window totals and tenure bands**. The dashboard and reporting engine use SQLite; it does not require Oracle.
+
+## Local installation on Windows (CMD)
+
+```cmd
+cd /d C:\Users\LENOVO\Downloads\PeoplePulse
+pip install uv
 uv sync
+uv run python -m unittest discover -s tests -v
 uv run streamlit run app.py
 ```
 
-`uv sync` creates a virtual environment and resolves dependencies from `pyproject.toml`. On first successful resolution it creates `uv.lock`; commit that lockfile to GitHub for reproducible deployments. This source package **does not include a pre-generated lockfile**, because dependency registry access was unavailable in the build environment.
+For Linux/macOS, clone the repository and run the last three commands from the project directory. Python 3.11 is the default local version (`.python-version`).
 
-Test the backend:
+### Dependency lockfile
 
-```bash
-uv run python -m unittest discover -s tests -v
+`pyproject.toml` is the source of truth for dependencies. Run `uv lock` or `uv sync` on a machine with internet access, then **commit the generated `uv.lock`** for reproducible installs. The exported project may not contain `uv.lock` because package registry access was unavailable in the build environment. CI is configured to resolve dependencies until a lockfile is committed; then consider changing it to `uv sync --locked`.
+
+### Generate a standalone case study
+
+First launch the app so that the SQLite demo database is initialized. Then run:
+
+```cmd
+uv run python src/case_study.py --db data/peoplepulse.db --source "Synthetic demo (fictional)" --output docs/ATTRITION_CASE_STUDY.md
 ```
 
-Alternatively, Streamlit Community Cloud can install the included `requirements.txt` without uv.
+## Run checks
 
-## Deploy on Streamlit Community Cloud
+```cmd
+uv run python -m unittest discover -s tests -v
+uv run python -m compileall -q app.py src tests
+```
 
-1. Commit `app.py`, `src/`, `sql/`, `requirements.txt`, `pyproject.toml`, `.streamlit/config.toml`, and the other project files to the repository root.
-2. Visit https://share.streamlit.io and sign in using GitHub.
-3. Select `kashishchaudhari/PeoplePulse`, branch `main`, main file `app.py`.
-4. Deploy. The dashboard will automatically seed synthetic data on its first launch.
-5. Copy the live URL into this README and GitHub's **About → Website** field.
+GitHub Actions runs the same checks on pushes and pull requests: see `.github/workflows/tests.yml`.
 
-**Hosted persistence:** Streamlit Community Cloud's filesystem should be treated as ephemeral. Data uploads and the SQLite reporting audit may reset on rebuild or restart. Only fictional datasets should be uploaded.
+## Deploy public dashboard
 
-## File structure
+1. Push these files to `kashishchaudhari/PeoplePulse` (repository root, including `.streamlit`).
+2. In [Streamlit Community Cloud](https://share.streamlit.io/), deploy branch `main`, entrypoint `app.py`.
+3. Use the included `requirements.txt` for cloud installation compatibility.
+4. Add the live deployment URL to the GitHub **About → Website** field and at the top of this README.
+
+> **Live dashboard:** *Not deployed yet — add URL after deployment.*
+
+Streamlit Community Cloud file storage can reset during restarts and redeployments. This application automatically initializes 450 synthetic employees on first launch. It has **no production SSO, real row-level authorization, tamper-proof audit storage or small-cell privacy controls**. The demo role selector is illustrative, not a security boundary.
+
+## Repository structure
 
 ```text
-app.py                 # Interactive executive dashboard and SQL report center
-src/portal.py          # SQLite schema, ingestion, reporting and audit functions
-src/generate_demo.py   # Reproducible synthetic fictional dataset
-sql/                   # Sample SQL reports
-pyproject.toml         # uv dependencies and project metadata
-.python-version        # Preferred local interpreter (Python 3.11)
-requirements.txt       # Streamlit Community Cloud installer compatibility
-tests/test_portal.py   # Five backend tests
-.streamlit/config.toml # Theme
+app.py                       # Six-tab interactive dashboard
+src/portal.py                # SQLite ingestion, reporting and audit engine
+src/generate_demo.py         # Deterministic fictional employee data
+src/analytics.py             # Attrition summaries, Wilson intervals, quality checks
+src/recruitment.py           # Independent fictional applicant funnel
+src/case_study.py            # Repeatable Markdown analytical case study
+sql/advanced_analytics.sql   # CTE, window functions and conditional aggregation
+sql/otbi_compatible_reporting.sql  # Existing illustrative SQL
+styles: .streamlit/config.toml
+.github/workflows/tests.yml  # CI
+pyproject.toml               # uv project dependencies
+requirements.txt             # Cloud compatibility
+tests/                       # 16 automated tests
+docs/ATTRITION_CASE_STUDY.md  # Reproduced synthetic-data findings
 ```
 
-## Data and responsible usage
+## Next iterations
 
-The Kaggle IBM HR dataset contains fictional employee records. The synthetic sample is generated locally and should not be interpreted as realistic workforce prevalence, demographic distributions or causal findings. The dashboard uses a demo role dropdown—not real user authentication. Compensation access gating is illustrative only. This is **not production HR software** and should not handle sensitive personal information.
-
-Oracle HCM / OTBI and BI Publisher are **roadmap integrations**, not implemented. No time-saving claims have been measured.
-
-## Roadmap
-
-- Real SSO and permission enforcement at database level
-- Privacy-preserving suppression of small groups
-- Scheduled reporting and durable audit storage
-- Power BI / Tableau and authorized Oracle HCM integrations
-- Reproducible benchmark of manual vs automated reporting effort
+- Use authorized longitudinal event data for genuine trends, instead of fabricating monthly employee history.
+- Implement real user authentication and database access controls before sensitive-data use.
+- Add documented recruitment channel costs and scenario assumptions (never fabricate business impact).
+- Add dashboard screenshots and publish the public Streamlit URL.
+- Evaluate subgroup associations with prespecified adjustment models, including careful validation.
