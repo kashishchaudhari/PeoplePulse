@@ -2,6 +2,28 @@
 
 **Portfolio project | Python · SQL · Streamlit · Plotly · pandas · SciPy · uv**
 
+## Live interactive dashboard
+
+**[🚀 Launch PeoplePulse — Live Streamlit Dashboard](https://peoplepulse-analytics.streamlit.app/)** · **[View source on GitHub](https://github.com/kashishchaudhari/PeoplePulse)**
+
+Explore workforce KPIs, attrition patterns, recruitment funnels, statistical investigations, and SQL-powered reports in the deployed app.
+
+## Dashboard preview
+
+The screenshots below are linked to the existing public GitHub repository's `assets/` folder so that they remain visible even when this source ZIP is extracted without image binaries.
+
+### Executive Overview
+
+![Executive Overview](https://raw.githubusercontent.com/kashishchaudhari/PeoplePulse/main/assets/Executive%20Overview.png)
+
+### Attrition Investigation
+
+![Attrition Analysis](https://raw.githubusercontent.com/kashishchaudhari/PeoplePulse/main/assets/Attribution%20Insights.png)
+
+### Recruitment Intelligence
+
+![Recruitment Analytics](https://raw.githubusercontent.com/kashishchaudhari/PeoplePulse/main/assets/Recruitment%20Analytics.png)
+
 PeoplePulse turns fictional HR and recruitment records into reproducible, understandable workforce insights. It combines **data ingestion, SQL reporting, statistical exploration, recruitment funnel analysis, interactive dashboards, exportable reports and automated tests** in one application.
 
 > **Privacy and provenance:** All demo employee and applicant records are *synthetic*. You can optionally import the publicly available **fictional** [IBM HR Analytics Employee Attrition & Performance](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) CSV (1,470 rows). The recruitment module uses a **separate synthetic event dataset**; it is not extracted from IBM. There is no connection to Oracle HCM, OTBI or BI Publisher. This project must not be used for real employee data.
@@ -100,9 +122,9 @@ GitHub Actions runs the same checks on pushes and pull requests: see `.github/wo
 1. Push these files to `kashishchaudhari/PeoplePulse` (repository root, including `.streamlit`).
 2. In [Streamlit Community Cloud](https://share.streamlit.io/), deploy branch `main`, entrypoint `app.py` (compatibility launcher for `main.py`), or change it to `main.py` after deployment.
 3. Use the included `requirements.txt` for cloud installation compatibility.
-4. Add the live deployment URL to the GitHub **About → Website** field and at the top of this README.
+4. The public dashboard is deployed at [peoplepulse-analytics.streamlit.app](https://peoplepulse-analytics.streamlit.app/). Keep this URL in the GitHub **About → Website** field.
 
-> **Live dashboard:** *Not deployed yet — add URL after deployment.*
+> **Live dashboard:** [Open PeoplePulse](https://peoplepulse-analytics.streamlit.app/)
 
 Streamlit Community Cloud file storage can reset during restarts and redeployments. This application automatically initializes 450 synthetic employees on first launch. It has **no production SSO, real row-level authorization, tamper-proof audit storage or small-cell privacy controls**. The demo role selector is illustrative, not a security boundary.
 
@@ -118,7 +140,7 @@ src/recruitment.py           # Independent fictional applicant funnel
 src/case_study.py            # Repeatable Markdown analytical case study
 sql/advanced_analytics.sql   # CTE, window functions and conditional aggregation
 sql/otbi_compatible_reporting.sql  # Existing illustrative SQL
-styles: .streamlit/config.toml
+.streamlit/config.toml       # Streamlit theme and settings
 .github/workflows/tests.yml  # CI
 pyproject.toml               # uv project dependencies
 requirements.txt             # Cloud compatibility
@@ -131,5 +153,5 @@ docs/ATTRITION_CASE_STUDY.md  # Reproduced synthetic-data findings
 - Use authorized longitudinal event data for genuine trends, instead of fabricating monthly employee history.
 - Implement real user authentication and database access controls before sensitive-data use.
 - Add documented recruitment channel costs and scenario assumptions (never fabricate business impact).
-- Add dashboard screenshots and publish the public Streamlit URL.
+- Refresh the dashboard screenshots after major visual redesigns.
 - Evaluate subgroup associations with prespecified adjustment models, including careful validation.
